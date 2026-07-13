@@ -20,3 +20,22 @@ export const normalizeAngle = (angle) => {
   while (angle > Math.PI) angle -= Math.PI * 2;
   return angle;
 };
+
+/**
+ * Calculates the inverse of a standard Singmaster move notation.
+ * @param {string} move - Move token (e.g. "R", "U'", "F2").
+ * @returns {string} The inverse move token.
+ */
+export const getInverseMove = (move) => {
+  if (!move) return '';
+  const face = move[0];
+  const modifier = move.slice(1);
+
+  if (modifier === "'") {
+    return face;
+  } else if (modifier === '2') {
+    return move; // 180 degrees inverse is itself
+  } else {
+    return `${face}'`;
+  }
+};
