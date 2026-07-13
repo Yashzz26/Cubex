@@ -1,6 +1,9 @@
+import CubeController from '../cube/CubeController.js';
+
 class SolverPage {
   constructor() {
     this.name = 'SolverPage';
+    this.cubeController = null;
   }
 
   render() {
@@ -54,25 +57,34 @@ class SolverPage {
         </aside>
 
         <!-- 3D Cube rendering container (Right Pane) -->
-        <main class="solver-cube-area" style="display: flex; align-items: center; justify-content: center; min-height: 400px; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--radius-lg); position: relative; overflow: hidden; box-shadow: var(--shadow-md);">
-          <div style="text-align: center; color: var(--text-secondary);">
-            <div style="font-size: 4rem; margin-bottom: var(--spacing-sm); color: var(--primary-cta);">
-              <i class="bx bx-cube"></i>
-            </div>
-            <p class="font-medium">3D Interactive Rubik's Cube</p>
-            <p class="text-sm text-muted" style="margin-top: var(--spacing-xs);">Three.js interaction canvas will mount here</p>
-          </div>
+        <main id="solver-cube-canvas" class="solver-cube-area" style="min-height: 400px; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--radius-lg); position: relative; overflow: hidden; box-shadow: var(--shadow-md);">
+          <!-- Three.js Canvas will mount here -->
         </main>
       </div>
     `;
   }
 
   mount() {
-    console.log('SolverPage mounted');
+    const container = document.getElementById('solver-cube-canvas');
+    if (container) {
+      container.innerHTML = '';
+      
+      this.cubeController = new CubeController(container, {
+        autoRotate: false,
+        enableZoom: true,
+        enablePan: false,
+        cameraPos: [4.2, 4.2, 6.2]
+      });
+    }
+    console.log('SolverPage mounted with 3D scene');
   }
 
   destroy() {
-    console.log('SolverPage unmounted');
+    if (this.cubeController) {
+      this.cubeController.dispose();
+      this.cubeController = null;
+      console.log('SolverPage 3D scene cleaned up');
+    }
   }
 }
 

@@ -1,6 +1,9 @@
+import CubeController from '../cube/CubeController.js';
+
 class HomePage {
   constructor() {
     this.name = 'HomePage';
+    this.cubeController = null;
   }
 
   render() {
@@ -20,27 +23,37 @@ class HomePage {
           </a>
         </div>
 
-        <!-- 3D Cube Canvas Container Placeholder -->
-        <div class="cube-showcase-container" style="width: 100%; max-width: 450px; height: 350px; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; position: relative; box-shadow: var(--shadow-md);">
-          <div style="text-align: center; color: var(--text-secondary);">
-            <div style="font-size: 3.5rem; margin-bottom: var(--spacing-sm); color: var(--primary-cta); opacity: 0.85;">
-              <i class="bx bxs-cube-alt animate-pulse-subtle" style="animation: pulse-subtle 2s infinite ease-in-out;"></i>
-            </div>
-            <p class="font-medium">3D Cube Engine Preview</p>
-            <p class="text-sm text-muted" style="margin-top: var(--spacing-xs);">Three.js canvas will load here in Phase 2</p>
-          </div>
+        <!-- 3D Cube Canvas Container -->
+        <div id="home-cube-showcase" style="width: 100%; max-width: 450px; height: 350px; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; position: relative; box-shadow: var(--shadow-md); overflow: hidden;">
+          <!-- Three.js Canvas will mount here -->
         </div>
       </div>
     `;
   }
 
   mount() {
-    // Phase 1: Verify lifecycle mount
-    console.log('HomePage mounted successfully');
+    const container = document.getElementById('home-cube-showcase');
+    if (container) {
+      // Clear mount target text if any
+      container.innerHTML = '';
+      
+      this.cubeController = new CubeController(container, {
+        autoRotate: true,
+        autoRotateSpeed: 0.003,
+        enableZoom: false,
+        enablePan: false,
+        cameraPos: [3.8, 3.8, 5.2]
+      });
+    }
+    console.log('HomePage mounted with 3D showcase');
   }
 
   destroy() {
-    console.log('HomePage unmounted');
+    if (this.cubeController) {
+      this.cubeController.dispose();
+      this.cubeController = null;
+      console.log('HomePage 3D showcase cleaned up');
+    }
   }
 }
 
