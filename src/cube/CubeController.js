@@ -2,6 +2,7 @@ import CubeScene from './CubeScene.js';
 import CubeModel from './CubeModel.js';
 import RotationEngine from './RotationEngine.js';
 import AnimationQueue from './AnimationQueue.js';
+import CubeState from './CubeState.js';
 
 class CubeController {
   /**
@@ -26,11 +27,19 @@ class CubeController {
     // 3. Add model to scene
     this.cubeScene.scene.add(this.cubeModel.getGroup());
 
-    // 4. Initialize Rotation and Animation Queue
+    // 4. Initialize Logical Cube State
+    this.cubeState = new CubeState();
+
+    // 5. Initialize Rotation and Animation Queue
     this.rotationEngine = new RotationEngine(this.cubeModel, this.cubeScene);
     this.animationQueue = new AnimationQueue(this.rotationEngine);
 
-    // 5. Bind update hooks for auto-rotation
+    // 6. Bind queue hooks to keep visual and logical state in perfect sync
+    this.animationQueue.onQueueComplete = () => {
+      this.syncVisuals();
+    };
+
+    // 7. Bind update hooks for auto-rotation
     if (this.options.autoRotate) {
       this.cubeScene.registerUpdate(() => this._handleAutoRotation());
     }
@@ -53,7 +62,7 @@ class CubeController {
   }
 
   /**
-   * Apply a sequence of moves (e.g. "R U R' U'").
+   * Apply a sequence of moves (e.g. "R U R' U'") to both logical and visual representations.
    * @param {string|string[]} moveInput - Space-separated move notation or an array of moves.
    */
   applyMoves(moveInput) {
@@ -61,11 +70,36 @@ class CubeController {
     if (Array.isArray(moveInput)) {
       moves = moveInput;
     } else if (typeof moveInput === 'string') {
-      // Split by whitespace and filter out empty elements
       moves = moveInput.trim().split(/\s+/).filter(m => m.length > 0);
     }
     
+    if (moves.length === 0) return;
+
+    // Apply moves to logical representation immediately
+    this.cubeState.applyMoves(moves);
+
+    // Enqueue moves to animate visually
     this.animationQueue.add(moves);
+  }
+
+  /**
+   * Instantly synchronizes the visual 3D sticker colors with the logical state.
+   */
+  syncVisuals() {
+    if (this.cubeModel && this.cubeState) {
+      this.cubeModel.syncFromLogicalState(this.cubeState);
+    }
+  }
+
+  /**
+   * Load a 54-character Kociemba serialization string into both logical and visual models.
+   * @param {string} kociembaStr - The 54-character color string.
+   */
+  loadKociembaState(kociembaStr) {
+    if (this.cubeState) {
+      this.cubeState.deserialize(kociembaStr);
+      this.syncVisuals();
+    }
   }
 
   /**
@@ -128,6 +162,7 @@ class CubeController {
     }
     this.rotationEngine = null;
     this.cubeModel = null;
+    this.cubeState = null;
 
     if (window.cubeController === this) {
       delete window.cubeController;
