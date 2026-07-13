@@ -1,6 +1,7 @@
 import router from './Router.js';
 import themeManager from '../ui/ThemeManager.js';
 import navigation from '../ui/Navigation.js';
+import solver from '../solver/Solver.js';
 
 // Page Imports
 import HomePage from '../pages/HomePage.js';
@@ -22,6 +23,9 @@ class App {
   init() {
     // 1. Initialize Theme (applies body classes before rendering shell to avoid flashes)
     themeManager.init();
+
+    // 2. Initialize Solver search tables in background
+    solver.init();
 
     // 2. Render App Shell Layout
     this._renderShell();
