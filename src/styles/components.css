@@ -250,3 +250,46 @@
 .validation-error-list p::before {
   content: "⚠ ";
 }
+
+/* ============================================================
+   Camera Scanner — Phase 8
+   ============================================================ */
+
+/* Video container with grid overlay */
+.scanner-video-container {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Grid cells pulsing animation on center cell */
+.scan-cell-center {
+  animation: scan-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes scan-pulse {
+  0%, 100% { border-color: rgba(255,255,255,0.9); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2); }
+  50%       { border-color: var(--primary-cta);    box-shadow: inset 0 0 0 1px var(--primary-cta-glow); }
+}
+
+/* Preview sticker cells */
+.preview-sticker {
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.preview-sticker:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 2.5px rgba(255,255,255,0.4);
+}
+
+/* Correction swatches */
+.correction-swatch {
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.correction-swatch:hover {
+  transform: scale(1.18);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+}
+
