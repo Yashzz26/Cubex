@@ -4,6 +4,8 @@ import CubeStateConverter from '../solver/CubeStateConverter.js';
 import CubeState from '../cube/CubeState.js';
 import MoveTranslator from '../solver/MoveTranslator.js';
 import { getInverseMove } from '../utils/math.js';
+import ManualNetState from '../manual/ManualNetState.js';
+import storageManager from '../storage/StorageManager.js';
 
 class SolverPage {
   constructor() {
@@ -161,6 +163,37 @@ class SolverPage {
     }
 
     console.log('SolverPage mounted');
+
+    // Check if ManualPage handed off a pending cube state to solve
+    this._checkPendingState();
+  }
+
+  /**
+   * If ManualPage saved a pending state to localStorage, load and solve it.
+   * @private
+   */
+  async _checkPendingState() {
+    const pending = storageManager.getItem('pending_state');
+    if (!pending) return;
+    storageManager.removeItem('pending_state');
+
+    try {
+      const netState = new ManualNetState();
+      netState.fromJSON(pending);
+      const cubeState = netState.toCubeState();
+
+      // Load the scrambled visual into the 3D cube
+      const faceletStr = CubeStateConverter.toFaceletString(cubeState);
+      if (this.cubeController) {
+        this.cubeController.loadKociembaState(faceletStr);
+      }
+
+      // Generate and load the solution
+      const sol = await solutionManager.generateSolution(cubeState);
+      this._loadSolution(sol);
+    } catch (err) {
+      console.error('Failed to load pending manual state into solver:', err);
+    }
   }
 
   /**

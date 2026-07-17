@@ -172,3 +172,81 @@
 .toast-error { border-left: 4px solid var(--danger); }
 .toast-warning { border-left: 4px solid var(--warning); }
 .toast-info { border-left: 4px solid var(--info); }
+
+/* ============================================================
+   Manual Net Editor — Phase 7
+   ============================================================ */
+
+/* Sticker hover glow (skip centers which have pointer-events: none) */
+.net-sticker:hover {
+  box-shadow: inset 0 0 0 2.5px rgba(255, 255, 255, 0.55);
+  transform: scale(1.08);
+  z-index: 1;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* Unpainted placeholder */
+.net-sticker.unpainted {
+  background-color: #1e2340 !important;
+  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.08);
+}
+
+/* Palette swatch active ring */
+.palette-color {
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.palette-color:hover {
+  transform: scale(1.12);
+}
+.palette-color.active {
+  box-shadow: 0 0 0 3px var(--primary-cta), 0 0 12px var(--primary-cta-glow);
+  transform: scale(1.15);
+  border-color: var(--primary-cta) !important;
+}
+
+/* Color count rows */
+.color-count-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  align-items: center;
+  padding: 3px 0;
+  transition: color var(--transition-fast);
+}
+.color-count-row .count-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+.color-count-row .count-val {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--transition-fast);
+}
+.color-count-row.valid .count-val   { color: var(--success); }
+.color-count-row.invalid .count-val { color: var(--danger); }
+
+/* Validation error list */
+.validation-error-list {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.validation-error-list p {
+  font-size: 0.78rem;
+  color: var(--danger);
+  margin: 0;
+  line-height: 1.4;
+}
+.validation-error-list p::before {
+  content: "⚠ ";
+}
