@@ -293,3 +293,49 @@
   box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
 }
 
+/* ============================================================
+   Practice Mode — Phase 9
+   ============================================================ */
+
+/* Timer digit display — color states */
+.timer-digits {
+  color: var(--text-primary);
+  transition: color 0.25s ease;
+  font-variant-numeric: tabular-nums;
+}
+.timer-digits.inspection      { color: var(--warning, #f59e0b); }
+.timer-digits.inspection.urgent { color: var(--danger, #ef4444); animation: timer-pulse 0.6s ease-in-out infinite; }
+.timer-digits.solving         { color: var(--success, #34c759); }
+.timer-digits.stopped         { color: var(--text-primary); }
+
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
+/* Recent solve rows */
+.recent-solve-row {
+  transition: background 0.15s ease;
+}
+.recent-solve-row:hover {
+  background: rgba(255,255,255,0.04) !important;
+}
+.recent-solve-row.best {
+  font-weight: 700;
+}
+
+/* Stat cards */
+.stat-card {
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+.stat-card:hover {
+  border-color: var(--primary-cta) !important;
+  transform: translateY(-2px);
+}
+
+/* Scramble notation display */
+.scramble-notation {
+  user-select: text;
+}
+
+
