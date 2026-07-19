@@ -174,25 +174,37 @@ class SolverPage {
    */
   async _checkPendingState() {
     const pending = storageManager.getItem('pending_state');
-    if (!pending) return;
-    storageManager.removeItem('pending_state');
-
-    try {
-      const netState = new ManualNetState();
-      netState.fromJSON(pending);
-      const cubeState = netState.toCubeState();
-
-      // Load the scrambled visual into the 3D cube
-      const faceletStr = CubeStateConverter.toFaceletString(cubeState);
-      if (this.cubeController) {
-        this.cubeController.loadKociembaState(faceletStr);
+    if (pending) {
+      storageManager.removeItem('pending_state');
+      try {
+        const netState = new ManualNetState();
+        netState.fromJSON(pending);
+        const cubeState = netState.toCubeState();
+        const faceletStr = CubeStateConverter.toFaceletString(cubeState);
+        if (this.cubeController) this.cubeController.loadKociembaState(faceletStr);
+        const sol = await solutionManager.generateSolution(cubeState);
+        this._loadSolution(sol);
+      } catch (err) {
+        console.error('Failed to load pending manual state into solver:', err);
       }
+    }
 
-      // Generate and load the solution
-      const sol = await solutionManager.generateSolution(cubeState);
-      this._loadSolution(sol);
-    } catch (err) {
-      console.error('Failed to load pending manual state into solver:', err);
+    // Check for a solution replayed from History page
+    const replay = storageManager.getItem('replay_solution');
+    if (replay) {
+      storageManager.removeItem('replay_solution');
+      try {
+        // Load the initial visual state from saved face colors
+        if (this.cubeController && replay.initialState) {
+          const tempState = new CubeState(replay.initialState);
+          const faceletStr = CubeStateConverter.toFaceletString(tempState);
+          this.cubeController.loadKociembaState(faceletStr);
+        }
+        // Load solution directly (already solved, no re-solving needed)
+        this._loadSolution(replay);
+      } catch (err) {
+        console.error('Failed to replay solution from history:', err);
+      }
     }
   }
 

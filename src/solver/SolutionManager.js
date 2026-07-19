@@ -2,6 +2,7 @@ import solver from './Solver.js';
 import CubeStateConverter from './CubeStateConverter.js';
 import MoveParser from './MoveParser.js';
 import { generateId } from '../utils/helpers.js';
+import solveHistory from '../storage/SolveHistory.js';
 
 class SolutionManager {
   /**
@@ -23,7 +24,7 @@ class SolutionManager {
       // 4. Calculate estimated duration (~0.35s per single turn)
       const estimatedDuration = Number((moves.length * 0.35).toFixed(1));
 
-      return {
+      const solution = {
         id: generateId('solve'),
         createdAt: new Date().toISOString(),
         initialState: cubeState.clone().faces,
@@ -32,6 +33,11 @@ class SolutionManager {
         moveCount: moves.length,
         estimatedDuration
       };
+
+      // Persist to history
+      solveHistory.add(solution);
+
+      return solution;
     } catch (error) {
       console.error('Failed to generate solution:', error);
       throw error;
