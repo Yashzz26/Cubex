@@ -68,7 +68,6 @@ class ScannerPage {
         <!-- Main Card -->
         <div class="card" id="scanner-card" style="display: flex; flex-direction: column; align-items: center; gap: var(--spacing-lg); padding: var(--spacing-xl); min-height: 460px; justify-content: center;">
 
-          <!-- IDLE STATE -->
           <div id="state-idle" style="display: flex; flex-direction: column; align-items: center; gap: var(--spacing-lg); text-align: center;">
             <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--primary-cta-glow); display: flex; align-items: center; justify-content: center;">
               <i class="bx bx-camera" style="font-size: 2.2rem; color: var(--primary-cta);"></i>
@@ -86,6 +85,17 @@ class ScannerPage {
               <a href="#/manual" class="btn btn-secondary">
                 <i class="bx bx-edit"></i> Manual Input Instead
               </a>
+            </div>
+          </div>
+
+          <!-- REQUESTING STATE — camera permission in progress -->
+          <div id="state-requesting" style="display: none; flex-direction: column; align-items: center; gap: var(--spacing-lg); text-align: center;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--primary-cta-glow); display: flex; align-items: center; justify-content: center;">
+              <i class="bx bx-loader-alt scanner-spin" style="font-size: 2.2rem; color: var(--primary-cta);"></i>
+            </div>
+            <div>
+              <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 6px;">Starting Camera…</h3>
+              <p class="text-sm text-secondary">Please allow camera access when prompted.</p>
             </div>
           </div>
 
@@ -336,17 +346,18 @@ class ScannerPage {
   _setState(newState) {
     this.state = newState;
 
-    // Show/hide sections
-    const show = (id, flex = true) => {
+    const show = (id) => {
       const el = document.getElementById(id);
-      if (el) el.style.display = flex ? 'flex' : 'block';
+      if (el) el.style.display = 'flex';
     };
     const hide = (id) => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     };
 
+    // Hide all states first
     hide('state-idle');
+    hide('state-requesting');
     hide('state-error');
     hide('state-live');
     hide('state-captured');
@@ -358,10 +369,12 @@ class ScannerPage {
         show('state-idle');
         if (progressWrap) progressWrap.style.display = 'none';
         break;
+
       case 'REQUESTING':
-        show('state-idle'); // keep visible briefly
+        show('state-requesting');
         if (progressWrap) progressWrap.style.display = 'none';
         break;
+
       case 'LIVE':
         show('state-live');
         if (progressWrap) progressWrap.style.display = 'block';
@@ -369,11 +382,16 @@ class ScannerPage {
         const backBtn = document.getElementById('back-btn');
         if (backBtn) backBtn.style.display = this.scanSession.currentFaceIndex > 0 ? 'inline-flex' : 'none';
         break;
-      case 'CAPTURED':
+
+      case 'CAPTURED': {
         show('state-captured');
         if (progressWrap) progressWrap.style.display = 'block';
-        hide('correction-palette');
+        // Make sure correction palette is hidden
+        const palette = document.getElementById('correction-palette');
+        if (palette) palette.style.display = 'none';
         break;
+      }
+
       case 'ERROR':
       case 'UNSUPPORTED':
         show('state-error');
@@ -381,6 +399,7 @@ class ScannerPage {
         break;
     }
   }
+
 
   _showError(message) {
     this._setState('ERROR');

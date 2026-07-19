@@ -48,10 +48,11 @@ class ScanSession {
   }
 
   /**
-   * Advance to the next face.
+   * Advance to the next face (up to and including the last index+1
+   * so isComplete() can evaluate after all faces are confirmed).
    */
   advance() {
-    if (this.currentFaceIndex < SCAN_ORDER.length - 1) {
+    if (this.currentFaceIndex < SCAN_ORDER.length) {
       this.currentFaceIndex++;
       this.save();
     }
