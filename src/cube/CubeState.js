@@ -114,108 +114,81 @@ class CubeState {
 
   /**
    * Execute 1 clockwise rotation on a face and its adjacent layer edges.
+   * Convention: "clockwise" as seen from outside the face (standard WCA).
    * @private
    */
   _executeClockwiseMove(face) {
-    // 1. Rotate the face itself clockwise
+    // 1. Rotate the face tiles clockwise (standard 3×3 rotation)
     const f = this.faces[face];
     const prev = [...f];
     f[0] = prev[6]; f[1] = prev[3]; f[2] = prev[0];
     f[3] = prev[7]; f[4] = prev[4]; f[5] = prev[1];
     f[6] = prev[8]; f[7] = prev[5]; f[8] = prev[2];
 
-    // 2. Shift adjacent facelet rows
+    // 2. Shift adjacent edge strips
+    // Indices reference: each face is laid out as:
+    //   0 1 2
+    //   3 4 5
+    //   6 7 8
     switch (face) {
       case 'U': {
-        const temp = [this.faces.L[0], this.faces.L[1], this.faces.L[2]];
-        this.faces.L[0] = this.faces.F[0]; this.faces.L[1] = this.faces.F[1]; this.faces.L[2] = this.faces.F[2];
-        this.faces.F[0] = this.faces.R[0]; this.faces.F[1] = this.faces.R[1]; this.faces.F[2] = this.faces.R[2];
-        this.faces.R[0] = this.faces.B[0]; this.faces.R[1] = this.faces.B[1]; this.faces.R[2] = this.faces.B[2];
-        this.faces.B[0] = temp[0]; this.faces.B[1] = temp[1]; this.faces.B[2] = temp[2];
+        // Clockwise from above: Front-top → Right-top → Back-top → Left-top
+        // F[0,1,2] → R[0,1,2] → B[0,1,2] → L[0,1,2] → F[0,1,2]
+        const temp = [this.faces.F[0], this.faces.F[1], this.faces.F[2]];
+        this.faces.F[0] = this.faces.L[0]; this.faces.F[1] = this.faces.L[1]; this.faces.F[2] = this.faces.L[2];
+        this.faces.L[0] = this.faces.B[0]; this.faces.L[1] = this.faces.B[1]; this.faces.L[2] = this.faces.B[2];
+        this.faces.B[0] = this.faces.R[0]; this.faces.B[1] = this.faces.R[1]; this.faces.B[2] = this.faces.R[2];
+        this.faces.R[0] = temp[0];         this.faces.R[1] = temp[1];         this.faces.R[2] = temp[2];
         break;
       }
       case 'D': {
-        const temp = [this.faces.R[6], this.faces.R[7], this.faces.R[8]];
-        this.faces.R[6] = this.faces.F[6]; this.faces.R[7] = this.faces.F[7]; this.faces.R[8] = this.faces.F[8];
-        this.faces.F[6] = this.faces.L[6]; this.faces.F[7] = this.faces.L[7]; this.faces.F[8] = this.faces.L[8];
-        this.faces.L[6] = this.faces.B[6]; this.faces.L[7] = this.faces.B[7]; this.faces.L[8] = this.faces.B[8];
-        this.faces.B[6] = temp[0]; this.faces.B[7] = temp[1]; this.faces.B[8] = temp[2];
+        // Clockwise from below: Front-bottom → Left-bottom → Back-bottom → Right-bottom
+        // F[6,7,8] → L[6,7,8] → B[6,7,8] → R[6,7,8] → F[6,7,8]
+        const temp = [this.faces.F[6], this.faces.F[7], this.faces.F[8]];
+        this.faces.F[6] = this.faces.R[6]; this.faces.F[7] = this.faces.R[7]; this.faces.F[8] = this.faces.R[8];
+        this.faces.R[6] = this.faces.B[6]; this.faces.R[7] = this.faces.B[7]; this.faces.R[8] = this.faces.B[8];
+        this.faces.B[6] = this.faces.L[6]; this.faces.B[7] = this.faces.L[7]; this.faces.B[8] = this.faces.L[8];
+        this.faces.L[6] = temp[0];         this.faces.L[7] = temp[1];         this.faces.L[8] = temp[2];
         break;
       }
       case 'F': {
+        // Clockwise from front: U-bottom-row → R-left-col → D-top-row(reversed) → L-right-col(reversed)
+        // U[6,7,8] → R[0,3,6] → D[2,1,0] → L[8,5,2] → U[6,7,8]
         const temp = [this.faces.U[6], this.faces.U[7], this.faces.U[8]];
-        this.faces.U[6] = this.faces.L[8];
-        this.faces.U[7] = this.faces.L[5];
-        this.faces.U[8] = this.faces.L[2];
-        
-        this.faces.L[6] = this.faces.D[0];
-        this.faces.L[3] = this.faces.D[1];
-        this.faces.L[0] = this.faces.D[2];
-        
-        this.faces.D[2] = this.faces.R[0];
-        this.faces.D[1] = this.faces.R[3];
-        this.faces.D[0] = this.faces.R[6];
-        
-        this.faces.R[0] = temp[0];
-        this.faces.R[3] = temp[1];
-        this.faces.R[6] = temp[2];
+        this.faces.U[6] = this.faces.L[8]; this.faces.U[7] = this.faces.L[5]; this.faces.U[8] = this.faces.L[2];
+        this.faces.L[2] = this.faces.D[0]; this.faces.L[5] = this.faces.D[1]; this.faces.L[8] = this.faces.D[2];
+        this.faces.D[0] = this.faces.R[6]; this.faces.D[1] = this.faces.R[3]; this.faces.D[2] = this.faces.R[0];
+        this.faces.R[0] = temp[0];         this.faces.R[3] = temp[1];         this.faces.R[6] = temp[2];
         break;
       }
       case 'B': {
+        // Clockwise from back: U-top-row(reversed) → L-left-col → D-bottom-row(reversed) → R-right-col
+        // U[2,1,0] → L[0,3,6] → D[6,7,8](reversed) → R[2,5,8] → U[2,1,0]
         const temp = [this.faces.U[0], this.faces.U[1], this.faces.U[2]];
-        this.faces.U[0] = this.faces.R[2];
-        this.faces.U[1] = this.faces.R[5];
-        this.faces.U[2] = this.faces.R[8];
-        
-        this.faces.R[2] = this.faces.D[8];
-        this.faces.R[5] = this.faces.D[7];
-        this.faces.R[8] = this.faces.D[6];
-        
-        this.faces.D[6] = this.faces.L[0];
-        this.faces.D[7] = this.faces.L[3];
-        this.faces.D[8] = this.faces.L[6];
-        
-        this.faces.L[0] = temp[2];
-        this.faces.L[3] = temp[1];
-        this.faces.L[6] = temp[0];
+        this.faces.U[0] = this.faces.R[2]; this.faces.U[1] = this.faces.R[5]; this.faces.U[2] = this.faces.R[8];
+        this.faces.R[2] = this.faces.D[8]; this.faces.R[5] = this.faces.D[7]; this.faces.R[8] = this.faces.D[6];
+        this.faces.D[6] = this.faces.L[0]; this.faces.D[7] = this.faces.L[3]; this.faces.D[8] = this.faces.L[6];
+        this.faces.L[0] = temp[2];         this.faces.L[3] = temp[1];         this.faces.L[6] = temp[0];
         break;
       }
       case 'L': {
+        // Clockwise from left: U-left-col → F-left-col → D-left-col → B-right-col(reversed)
+        // U[0,3,6] → F[0,3,6] → D[0,3,6] → B[8,5,2] → U[0,3,6]
         const temp = [this.faces.U[0], this.faces.U[3], this.faces.U[6]];
-        this.faces.U[0] = this.faces.B[8];
-        this.faces.U[3] = this.faces.B[5];
-        this.faces.U[6] = this.faces.B[2];
-        
-        this.faces.B[8] = this.faces.D[0];
-        this.faces.B[5] = this.faces.D[3];
-        this.faces.B[2] = this.faces.D[6];
-        
-        this.faces.D[0] = this.faces.F[0];
-        this.faces.D[3] = this.faces.F[3];
-        this.faces.D[6] = this.faces.F[6];
-        
-        this.faces.F[0] = temp[0];
-        this.faces.F[3] = temp[1];
-        this.faces.F[6] = temp[2];
+        this.faces.U[0] = this.faces.B[8]; this.faces.U[3] = this.faces.B[5]; this.faces.U[6] = this.faces.B[2];
+        this.faces.B[8] = this.faces.D[0]; this.faces.B[5] = this.faces.D[3]; this.faces.B[2] = this.faces.D[6];
+        this.faces.D[0] = this.faces.F[0]; this.faces.D[3] = this.faces.F[3]; this.faces.D[6] = this.faces.F[6];
+        this.faces.F[0] = temp[0];         this.faces.F[3] = temp[1];         this.faces.F[6] = temp[2];
         break;
       }
       case 'R': {
+        // Clockwise from right: U-right-col → B-left-col(reversed) → D-right-col → F-right-col
+        // U[2,5,8] → B[6,3,0] → D[2,5,8] → F[2,5,8] → U[2,5,8]
         const temp = [this.faces.U[2], this.faces.U[5], this.faces.U[8]];
-        this.faces.U[2] = this.faces.F[2];
-        this.faces.U[5] = this.faces.F[5];
-        this.faces.U[8] = this.faces.F[8];
-        
-        this.faces.F[2] = this.faces.D[2];
-        this.faces.F[5] = this.faces.D[5];
-        this.faces.F[8] = this.faces.D[8];
-        
-        this.faces.D[2] = this.faces.B[6];
-        this.faces.D[5] = this.faces.B[3];
-        this.faces.D[8] = this.faces.B[0];
-        
-        this.faces.B[0] = temp[2];
-        this.faces.B[3] = temp[1];
-        this.faces.B[6] = temp[0];
+        this.faces.U[2] = this.faces.F[2]; this.faces.U[5] = this.faces.F[5]; this.faces.U[8] = this.faces.F[8];
+        this.faces.F[2] = this.faces.D[2]; this.faces.F[5] = this.faces.D[5]; this.faces.F[8] = this.faces.D[8];
+        this.faces.D[2] = this.faces.B[6]; this.faces.D[5] = this.faces.B[3]; this.faces.D[8] = this.faces.B[0];
+        this.faces.B[0] = temp[2];         this.faces.B[3] = temp[1];         this.faces.B[6] = temp[0];
         break;
       }
     }
@@ -223,3 +196,4 @@ class CubeState {
 }
 
 export default CubeState;
+
