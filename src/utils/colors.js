@@ -24,11 +24,4 @@ export const rgbToHsl = (r, g, b) => {
   return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
 };
 
-// Placeholder for CIELAB transformations
-export const rgbToLab = (r, g, b) => {
-  return [0, 0, 0];
-};
 
-export const deltaE = (labA, labB) => {
-  return 0;
-};
