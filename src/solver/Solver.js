@@ -49,6 +49,11 @@ class Solver {
       // Load cube state from facelet string representation
       const cube = Cube.fromString(faceletString);
       
+      // If cube is already solved, return empty solution string
+      if (cube.isSolved()) {
+        return '';
+      }
+
       // Solve and retrieve standard moves notation string
       const solution = cube.solve();
       return solution;
