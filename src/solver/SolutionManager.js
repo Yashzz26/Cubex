@@ -12,6 +12,9 @@ class SolutionManager {
    */
   async generateSolution(cubeState) {
     try {
+      // Yield to DOM event loop so UI paints and animations complete smoothly before CPU calculation
+      await new Promise(resolve => setTimeout(resolve, 30));
+
       // 1. Convert color state to facelet-symbol string (U, R, F, D, L, B)
       const faceletString = CubeStateConverter.toFaceletString(cubeState);
       

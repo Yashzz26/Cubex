@@ -222,30 +222,38 @@ class SolverPage {
 
     const scramble = "R U R' U'";
     console.log(`Applying test scramble: "${scramble}"`);
-    
-    // Apply scramble visually and logically
-    this.cubeController.applyMoves(scramble);
-    
-    // Disable buttons during animation
-    this.scrambleBtn.disabled = true;
 
-    // Generate Kociemba solution for the expected state (since logical state updates immediately)
-    try {
-      const sol = await solutionManager.generateSolution(this.cubeController.cubeState);
-      
-      // Wait until the scramble animation finishes before loading the solution
+    // Disable scramble button during animation and computation
+    if (this.scrambleBtn) this.scrambleBtn.disabled = true;
+
+    // Apply scramble moves to logical cube state first
+    this.cubeController.cubeState.applyMoves(scramble);
+    const scrambledState = this.cubeController.cubeState.clone();
+
+    // Hook queue completion so solution calculation runs AFTER 3D animation finishes smoothly
+    this.cubeController.animationQueue.onQueueComplete = async () => {
+      // Restore default sync hook
       this.cubeController.animationQueue.onQueueComplete = () => {
-        this._loadSolution(sol);
-        this.scrambleBtn.disabled = false;
-        // Restore default sync hook
-        this.cubeController.animationQueue.onQueueComplete = () => {
-          this.cubeController.syncVisuals();
-        };
+        this.cubeController.syncVisuals();
       };
-    } catch (err) {
-      console.error('Failed to generate solution:', err);
-      this.scrambleBtn.disabled = false;
-    }
+
+      try {
+        const statusText = document.getElementById('cube-status-text');
+        if (statusText) {
+          statusText.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--warning); display: inline-block;"></span> Calculating Solution...';
+        }
+
+        const sol = await solutionManager.generateSolution(scrambledState);
+        this._loadSolution(sol);
+      } catch (err) {
+        console.error('Failed to generate solution:', err);
+      } finally {
+        if (this.scrambleBtn) this.scrambleBtn.disabled = false;
+      }
+    };
+
+    // Trigger 3D animation
+    this.cubeController.animationQueue.add(scramble);
   }
 
   /**
