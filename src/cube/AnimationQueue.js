@@ -25,15 +25,20 @@ class AnimationQueue {
 
   /**
    * Append a single or array of moves to the queue.
+   * Handles space-separated move strings (e.g. "R U R' U'") by splitting them into individual move tokens.
    * @param {string|string[]} moves - Move notation or array of notations.
    */
   add(moves) {
+    let moveList = [];
     if (Array.isArray(moves)) {
-      this.queue.push(...moves);
+      moveList = moves;
     } else if (typeof moves === 'string' && moves.trim()) {
-      this.queue.push(moves);
+      moveList = moves.trim().split(/\s+/).filter(m => m.length > 0);
     }
 
+    if (moveList.length === 0) return;
+
+    this.queue.push(...moveList);
     this.process();
   }
 

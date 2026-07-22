@@ -6,6 +6,7 @@ import MoveTranslator from '../solver/MoveTranslator.js';
 import { getInverseMove } from '../utils/math.js';
 import ManualNetState from '../manual/ManualNetState.js';
 import storageManager from '../storage/StorageManager.js';
+import ScrambleGenerator from '../practice/ScrambleGenerator.js';
 
 class SolverPage {
   constructor() {
@@ -213,24 +214,21 @@ class SolverPage {
    * @private
    */
   async _applyTestScramble() {
-    if (this.cubeController.isBusy()) return;
+    if (!this.cubeController || this.cubeController.isBusy()) return;
 
     this._pause();
     this.solution = null;
     this.currentIndex = 0;
     this._updateUI();
 
-    const scramble = "R U R' U'";
-    console.log(`Applying test scramble: "${scramble}"`);
+    // Generate a random 6-move WCA-compliant scramble
+    const scramble = ScrambleGenerator.generate(6);
+    console.log(`Applying scramble: "${scramble}"`);
 
     // Disable scramble button during animation and computation
     if (this.scrambleBtn) this.scrambleBtn.disabled = true;
 
-    // Apply scramble moves to logical cube state first
-    this.cubeController.cubeState.applyMoves(scramble);
-    const scrambledState = this.cubeController.cubeState.clone();
-
-    // Hook queue completion so solution calculation runs AFTER 3D animation finishes smoothly
+    // Set completion hook BEFORE triggering animation so solution calculation runs AFTER scramble finishes 3D rotation
     this.cubeController.animationQueue.onQueueComplete = async () => {
       // Restore default sync hook
       this.cubeController.animationQueue.onQueueComplete = () => {
@@ -243,7 +241,7 @@ class SolverPage {
           statusText.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--warning); display: inline-block;"></span> Calculating Solution...';
         }
 
-        const sol = await solutionManager.generateSolution(scrambledState);
+        const sol = await solutionManager.generateSolution(this.cubeController.cubeState);
         this._loadSolution(sol);
       } catch (err) {
         console.error('Failed to generate solution:', err);
@@ -252,8 +250,8 @@ class SolverPage {
       }
     };
 
-    // Trigger 3D animation
-    this.cubeController.animationQueue.add(scramble);
+    // Apply scramble moves through cubeController (updates logical state AND animates 3D cubies)
+    this.cubeController.applyMoves(scramble);
   }
 
   /**
