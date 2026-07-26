@@ -254,6 +254,9 @@ class PracticePage {
   _newScramble() {
     // Reset timer to IDLE if not already
     if (this.state !== STATES.IDLE) {
+      // Bug 9: Stop timers before reset to cancel any running intervals/rAF loops
+      this.solveTimer.stop();
+      this.inspectionTimer.stop();
       this.solveTimer.reset();
       this.inspectionTimer.reset();
       this.state = STATES.IDLE;
@@ -373,6 +376,9 @@ class PracticePage {
       this._advanceState();
     } else if (e.code === 'Escape') {
       e.preventDefault();
+      // Bug 9: Stop timers before reset to cancel any running intervals/rAF loops
+      this.solveTimer.stop();
+      this.inspectionTimer.stop();
       this.solveTimer.reset();
       this.inspectionTimer.reset();
       this.state = STATES.IDLE;
@@ -386,6 +392,10 @@ class PracticePage {
   }
 
   destroy() {
+    // BUG I: Must stop() before reset() to cancel any active rAF/setInterval loops.
+    // Calling reset() alone on a running timer does not cancel it.
+    this.solveTimer.stop();
+    this.inspectionTimer.stop();
     this.solveTimer.reset();
     this.inspectionTimer.reset();
     if (this.cubeController) {

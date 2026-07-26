@@ -40,7 +40,8 @@ class ScannerPage {
     this.correctionIndex = null;  // sticker index currently being corrected
 
     // Bound handler for cleanup
-    this._boundResize = () => this._syncOverlay();
+    this._boundResize  = () => this._syncOverlay();
+    this._destroyed    = false; // Navigation guard for async _startCamera()
   }
 
   render() {
@@ -253,14 +254,19 @@ class ScannerPage {
       this.frameProcessor = new FrameProcessor(videoEl, this.offscreenCanvas);
       this.gridSampler    = new GridSampler(this.frameProcessor);
       await this.cameraManager.start(videoEl);
+
+      // BUG J: Guard against navigation during the async camera startup.
+      // destroy() may have been called (and cameraManager.stop() invoked)
+      // while getUserMedia / loadedmetadata was still pending.
+      if (this._destroyed) return;
+
       this._setState('LIVE');
       this._updateProgress();
     } catch (err) {
+      if (this._destroyed) return; // page gone — don't touch the DOM
       console.error('Camera start failed:', err);
-      const msg = err.name === 'NotAllowedError'
-        ? 'Camera permission was denied. Please allow camera access in your browser settings.'
-        : `Camera error: ${err.message}`;
-      this._showError(msg);
+      // Provide a friendlier message; CameraManager now throws descriptive errors.
+      this._showError(err.message || `Camera error: ${err.message}`);
     }
   }
 
@@ -338,7 +344,9 @@ class ScannerPage {
       s.style.boxShadow = 'none';
       s.style.transform = 'scale(1)';
     });
-    document.getElementById('correction-palette').style.display = 'none';
+    // Bug 3: Added null guard — was a bare access that could crash
+    const palette = document.getElementById('correction-palette');
+    if (palette) palette.style.display = 'none';
   }
 
   // ─── UI Helpers ───────────────────────────────────────────────────────────────
@@ -438,11 +446,14 @@ class ScannerPage {
   }
 
   destroy() {
+    this._destroyed = true; // Prevents async _startCamera() from touching dead DOM
     this.cameraManager.stop();
     window.removeEventListener('resize', this._boundResize);
     if (this.offscreenCanvas) {
       this.offscreenCanvas = null;
     }
+    this.frameProcessor = null;
+    this.gridSampler    = null;
     console.log('ScannerPage unmounted');
   }
 }
