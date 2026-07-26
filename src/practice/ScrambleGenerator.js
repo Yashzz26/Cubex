@@ -25,12 +25,28 @@ class ScrambleGenerator {
    * @returns {string} e.g. "R U2 F' L D2 B R2 U' F2 D"
    */
   static generate(length = 20) {
+    // BUG F: Sanitize input — clamp to a sensible range, reject non-positive values
+    length = Math.max(0, Math.floor(length));
+    if (length === 0) return '';
+
     const moves = [];
     let prevFace = null;
     let prevAxisGroup = null;
     let prevPrevAxisGroup = null;
 
+    // Safety escape hatch: bound the number of rejected candidates to prevent
+    // any theoretical infinite loop. In practice this never triggers for
+    // length >= 2 with 6 faces, but it makes the function unconditionally safe.
+    const maxAttempts = length * 50;
+    let attempts = 0;
+
     while (moves.length < length) {
+      if (++attempts > maxAttempts) {
+        // Should never happen in practice; log a warning and break
+        console.warn(`ScrambleGenerator: exceeded max attempts (${maxAttempts}) for length ${length}. Returning partial scramble.`);
+        break;
+      }
+
       // Pick a random face
       const face = FACES[Math.floor(Math.random() * FACES.length)];
       const axisGroup = this.getAxisGroup(face);

@@ -6,7 +6,8 @@
  * Creates a unique ID with custom prefix.
  */
 export const generateId = (prefix = 'id') => {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // BUG G: Replaced deprecated .substr(2, 9) with .slice(2, 11) — equivalent behavior
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 };
 
 /**

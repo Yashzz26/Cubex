@@ -4,6 +4,12 @@
  */
 class StorageManager {
   constructor() {
+    // BUG B (intentional non-fix): The localStorage key prefix remains 'cubix.' even
+    // though the application is now branded 'Cubex'. Renaming this prefix would silently
+    // destroy all existing user data (solve history, practice records, settings, scan
+    // sessions) stored under the old keys. No functional benefit justifies that breakage.
+    // If a key migration is ever needed, it must be done with explicit read-old/write-new
+    // logic, not a simple rename.
     this.prefix = 'cubix.';
   }
 
