@@ -46,11 +46,13 @@ class AnimationQueue {
    * Execute the next move in the queue if idle and not paused.
    */
   process() {
+    // Return early if busy, empty, or paused.
+    // Do NOT call _triggerQueueComplete() here — the single authoritative
+    // completion path is inside the rotateLayer onComplete callback below.
+    // Calling it here as well would cause stale/duplicate callbacks when
+    // process() is invoked externally (e.g. from resume() or add()) on an
+    // already-empty queue.
     if (this.rotationEngine.isAnimating || this.queue.length === 0 || this.isPaused) {
-      // Check if queue completed while animating was running
-      if (this.queue.length === 0 && !this.rotationEngine.isAnimating) {
-        this._triggerQueueComplete();
-      }
       return;
     }
 
@@ -70,8 +72,15 @@ class AnimationQueue {
           this.onMoveComplete(currentMove);
         }
 
-        // Recursively trigger next move
-        this.process();
+        // Bug 7: After the last move, isAnimating is now false.
+        // Call _triggerQueueComplete() here when the queue is fully drained,
+        // so the callback fires reliably through the normal animation path.
+        if (this.queue.length === 0) {
+          this._triggerQueueComplete();
+        } else {
+          // Recursively trigger next move
+          this.process();
+        }
       },
       this.speedMultiplier
     );

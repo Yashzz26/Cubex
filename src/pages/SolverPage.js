@@ -170,6 +170,15 @@ class SolverPage {
   }
 
   /**
+   * Returns true if this page has been destroyed (navigation away).
+   * Used to guard async callbacks that may fire after teardown.
+   * @private
+   */
+  _isDestroyed() {
+    return this.cubeController === null;
+  }
+
+  /**
    * If ManualPage saved a pending state to localStorage, load and solve it.
    * @private
    */
@@ -182,8 +191,10 @@ class SolverPage {
         netState.fromJSON(pending);
         const cubeState = netState.toCubeState();
         const faceletStr = CubeStateConverter.toFaceletString(cubeState);
+        if (this._isDestroyed()) return;
         if (this.cubeController) this.cubeController.loadKociembaState(faceletStr);
         const sol = await solutionManager.generateSolution(cubeState);
+        if (this._isDestroyed()) return; // page navigated away during await
         this._loadSolution(sol);
       } catch (err) {
         console.error('Failed to load pending manual state into solver:', err);
@@ -195,6 +206,7 @@ class SolverPage {
     if (replay) {
       storageManager.removeItem('replay_solution');
       try {
+        if (this._isDestroyed()) return;
         // Load the initial visual state from saved face colors
         if (this.cubeController && replay.initialState) {
           const tempState = new CubeState(replay.initialState);
@@ -232,12 +244,19 @@ class SolverPage {
     // Disable scramble button during animation and computation
     if (this.scrambleBtn) this.scrambleBtn.disabled = true;
 
-    // Set completion hook so solution is calculated and auto-played AFTER scramble animation completes
+    // Set completion hook so solution is calculated AFTER scramble animation completes.
+    // This closure captures 'this'. Install a guard so it is a no-op if page was
+    // destroyed (navigated away) while the scramble animation was still running.
     this.cubeController.animationQueue.onQueueComplete = async () => {
-      // Restore default sync hook
-      this.cubeController.animationQueue.onQueueComplete = () => {
-        this.cubeController.syncVisuals();
-      };
+      // Restore default sync hook immediately — even if we bail out below
+      if (this.cubeController && this.cubeController.animationQueue) {
+        this.cubeController.animationQueue.onQueueComplete = () => {
+          if (this.cubeController) this.cubeController.syncVisuals();
+        };
+      }
+
+      // Guard: page may have been navigated away during the async animation
+      if (this._isDestroyed()) return;
 
       try {
         const statusText = document.getElementById('cube-status-text');
@@ -246,18 +265,24 @@ class SolverPage {
         }
 
         const sol = await solutionManager.generateSolution(this.cubeController.cubeState);
+
+        // Guard again: page may have been destroyed during the solver await
+        if (this._isDestroyed()) return;
+
         this._loadSolution(sol);
-        
+
         // Auto-play solution
         this._play();
       } catch (err) {
         console.error('Failed to generate solution:', err);
-        const statusText = document.getElementById('cube-status-text');
-        if (statusText) {
-          statusText.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--danger); display: inline-block;"></span> Solution Failed';
+        if (!this._isDestroyed()) {
+          const statusText = document.getElementById('cube-status-text');
+          if (statusText) {
+            statusText.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--danger); display: inline-block;"></span> Solution Failed';
+          }
         }
       } finally {
-        if (this.scrambleBtn) this.scrambleBtn.disabled = false;
+        if (!this._isDestroyed() && this.scrambleBtn) this.scrambleBtn.disabled = false;
       }
     };
 
@@ -273,17 +298,34 @@ class SolverPage {
     this.solution = sol;
     this.currentIndex = 0;
     this.isPlaying = false;
-    
-    // Enable playback UI buttons
-    this.playPauseBtn.disabled = false;
-    this.prevBtn.disabled = false;
-    this.nextBtn.disabled = false;
-    this.restartBtn.disabled = false;
+
+    // Bug 8: Handle already-solved cube gracefully
+    if (sol.moves.length === 0) {
+      const statusText = document.getElementById('cube-status-text');
+      if (statusText) {
+        statusText.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--success); display: inline-block;"></span> Already Solved!';
+      }
+      const moveSeqContainer = document.getElementById('move-sequence-container');
+      const moveCountIndicator = document.getElementById('move-count-indicator');
+      if (moveCountIndicator) moveCountIndicator.textContent = '0 Moves';
+      if (moveSeqContainer) moveSeqContainer.innerHTML = '<span class="text-muted text-sm" style="font-family: var(--font-sans);">Cube is already in a solved state.</span>';
+      const instructionPanel = document.getElementById('instruction-panel');
+      const instructionText = document.getElementById('instruction-text');
+      if (instructionPanel) instructionPanel.style.display = 'block';
+      if (instructionText) instructionText.innerHTML = '<span style="color: var(--success); font-weight: 700;"><i class="bx bx-check-circle"></i> Cube is already solved!</span>';
+      return;
+    }
+
+    // Bug 2: Guard null button refs before setting disabled state
+    if (this.playPauseBtn) this.playPauseBtn.disabled = false;
+    if (this.prevBtn)      this.prevBtn.disabled = false;
+    if (this.nextBtn)      this.nextBtn.disabled = false;
+    if (this.restartBtn)   this.restartBtn.disabled = false;
 
     // Render move spans in list
     const moveSeqContainer = document.getElementById('move-sequence-container');
     const moveCountIndicator = document.getElementById('move-count-indicator');
-    
+
     if (moveSeqContainer && moveCountIndicator) {
       moveCountIndicator.textContent = `${sol.moveCount} Moves`;
       moveSeqContainer.innerHTML = sol.moves
@@ -324,25 +366,31 @@ class SolverPage {
    */
   _playNext() {
     if (!this.isPlaying || !this.solution || this.currentIndex >= this.solution.moves.length) {
-      if (this.currentIndex >= this.solution.moves.length) {
+      // Bug 1: Guard against null solution before accessing .moves.length
+      if (this.solution && this.currentIndex >= this.solution.moves.length) {
         this.isPlaying = false;
         this._updateUI();
       }
       return;
     }
 
+    // Guard: controller may have been disposed during async callbacks
+    if (!this.cubeController) return;
     if (this.cubeController.isBusy()) return;
 
     const nextMove = this.solution.moves[this.currentIndex];
 
     // Set callback to proceed index on completion
     this.cubeController.animationQueue.onQueueComplete = () => {
+      // Guard: page may have been destroyed while animation was running
+      if (this._isDestroyed()) return;
+
       // Hard-sync materials
       this.cubeController.syncVisuals();
-      
+
       this.currentIndex++;
       this._updateUI();
-      
+
       // Call recursively
       this._playNext();
     };
@@ -356,12 +404,13 @@ class SolverPage {
    * @private
    */
   _stepForward() {
-    if (!this.solution || this.currentIndex >= this.solution.moves.length || this.cubeController.isBusy()) return;
+    if (!this.solution || this.currentIndex >= this.solution.moves.length || !this.cubeController || this.cubeController.isBusy()) return;
     this._pause();
 
     const move = this.solution.moves[this.currentIndex];
 
     this.cubeController.animationQueue.onQueueComplete = () => {
+      if (this._isDestroyed()) return;
       this.cubeController.syncVisuals();
       this.currentIndex++;
       this._updateUI();
@@ -375,7 +424,7 @@ class SolverPage {
    * @private
    */
   _stepBackward() {
-    if (!this.solution || this.currentIndex <= 0 || this.cubeController.isBusy()) return;
+    if (!this.solution || this.currentIndex <= 0 || !this.cubeController || this.cubeController.isBusy()) return;
     this._pause();
 
     // Decrement index first to target the move we are reverting
@@ -384,6 +433,7 @@ class SolverPage {
     const inverse = getInverseMove(move);
 
     this.cubeController.animationQueue.onQueueComplete = () => {
+      if (this._isDestroyed()) return;
       this.cubeController.syncVisuals();
       this._updateUI();
     };
@@ -439,7 +489,7 @@ class SolverPage {
         const token = document.getElementById(`move-token-${idx}`);
         if (token) {
           if (idx === this.currentIndex) {
-            token.style.color = 'var(--text-primary)';
+            // Bug 5: Removed duplicate token.style.color that was always overridden
             token.style.fontWeight = 'bold';
             token.style.backgroundColor = 'var(--primary-cta)';
             token.style.color = '#ffffff';
@@ -480,20 +530,32 @@ class SolverPage {
       }
     }
 
-    // 5. Button bounds controls
+    // 5. Button bounds controls — Bug H: guard null refs
     if (this.solution) {
-      this.prevBtn.disabled = this.currentIndex === 0;
-      this.nextBtn.disabled = this.currentIndex === this.solution.moves.length;
-      this.playPauseBtn.disabled = this.currentIndex === this.solution.moves.length;
+      if (this.prevBtn)      this.prevBtn.disabled      = this.currentIndex === 0;
+      if (this.nextBtn)      this.nextBtn.disabled      = this.currentIndex === this.solution.moves.length;
+      if (this.playPauseBtn) this.playPauseBtn.disabled = this.currentIndex === this.solution.moves.length;
     }
   }
 
   destroy() {
+    // Cut all async callbacks BEFORE disposing so in-flight rAF/timer callbacks
+    // referencing this page cannot touch a destroyed cubeController.
+    if (this.cubeController && this.cubeController.animationQueue) {
+      this.cubeController.animationQueue.onQueueComplete = null;
+      this.cubeController.animationQueue.onMoveComplete  = null;
+      this.cubeController.animationQueue.onMoveStart     = null;
+    }
+
     if (this.cubeController) {
       this.cubeController.dispose();
-      this.cubeController = null;
+      this.cubeController = null; // _isDestroyed() now returns true
       console.log('SolverPage resources cleaned up');
     }
+
+    // Null remaining state so stale closures referencing 'this' are safe
+    this.solution    = null;
+    this.isPlaying   = false;
   }
 }
 
