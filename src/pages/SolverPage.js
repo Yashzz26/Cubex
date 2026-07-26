@@ -219,6 +219,10 @@ class SolverPage {
     this._pause();
     this.solution = null;
     this.currentIndex = 0;
+
+    // Reset visual and logical cube to solved state cleanly first
+    const solvedFacelets = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB";
+    this.cubeController.loadKociembaState(solvedFacelets);
     this._updateUI();
 
     // Generate a random 6-move WCA-compliant scramble
@@ -228,7 +232,7 @@ class SolverPage {
     // Disable scramble button during animation and computation
     if (this.scrambleBtn) this.scrambleBtn.disabled = true;
 
-    // Set completion hook BEFORE triggering animation so solution calculation runs AFTER scramble finishes 3D rotation
+    // Set completion hook so solution is calculated and auto-played AFTER scramble animation completes
     this.cubeController.animationQueue.onQueueComplete = async () => {
       // Restore default sync hook
       this.cubeController.animationQueue.onQueueComplete = () => {
@@ -243,8 +247,15 @@ class SolverPage {
 
         const sol = await solutionManager.generateSolution(this.cubeController.cubeState);
         this._loadSolution(sol);
+        
+        // Auto-play solution
+        this._play();
       } catch (err) {
         console.error('Failed to generate solution:', err);
+        const statusText = document.getElementById('cube-status-text');
+        if (statusText) {
+          statusText.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--danger); display: inline-block;"></span> Solution Failed';
+        }
       } finally {
         if (this.scrambleBtn) this.scrambleBtn.disabled = false;
       }

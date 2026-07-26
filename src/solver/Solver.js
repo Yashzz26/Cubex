@@ -3,29 +3,34 @@ import Cube from 'cubejs';
 class Solver {
   constructor() {
     this.isInitialized = false;
+    this.initPromise = null;
   }
 
   /**
    * Asynchronously initialize Kociemba search tables in the background.
-   * Generation of search tables can take 1-3 seconds.
+   * Generation of search tables can take 1-2 seconds.
    */
   async init() {
     if (this.isInitialized) return;
+    if (this.initPromise) return this.initPromise;
 
-    return new Promise((resolve) => {
-      // Defer to prevent blocking the UI layout painting
+    this.initPromise = new Promise((resolve) => {
       setTimeout(() => {
         try {
-          console.log('Initializing Kociemba solver search tables...');
-          Cube.initSolver();
-          this.isInitialized = true;
-          console.log('Kociemba search tables generated.');
+          if (!this.isInitialized) {
+            console.log('Initializing Kociemba solver search tables...');
+            Cube.initSolver();
+            this.isInitialized = true;
+            console.log('Kociemba search tables generated.');
+          }
         } catch (error) {
           console.error('Failed to initialize Kociemba solver:', error);
         }
         resolve();
-      }, 100);
+      }, 50);
     });
+
+    return this.initPromise;
   }
 
   /**
@@ -35,7 +40,7 @@ class Solver {
    */
   solve(faceletString) {
     if (!this.isInitialized) {
-      console.warn('Solver was not pre-initialized. Initializing synchronously...');
+      console.warn('Solver search tables not pre-initialized. Synchronously initializing Kociemba tables...');
       try {
         Cube.initSolver();
         this.isInitialized = true;

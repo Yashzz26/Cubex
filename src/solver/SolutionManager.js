@@ -12,6 +12,9 @@ class SolutionManager {
    */
   async generateSolution(cubeState) {
     try {
+      // Ensure solver tables are initialized
+      await solver.init();
+
       // Yield to DOM event loop so UI paints and animations complete smoothly before CPU calculation
       await new Promise(resolve => setTimeout(resolve, 30));
 

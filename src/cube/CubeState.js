@@ -132,23 +132,23 @@ class CubeState {
     //   6 7 8
     switch (face) {
       case 'U': {
-        // Clockwise from above: Front-top → Right-top → Back-top → Left-top
-        // F[0,1,2] → R[0,1,2] → B[0,1,2] → L[0,1,2] → F[0,1,2]
+        // U move cycle (matching cubejs ground truth):
+        // F[0,1,2] ← R[0,1,2] ← B[0,1,2] ← L[0,1,2] ← F[0,1,2]
         const temp = [this.faces.F[0], this.faces.F[1], this.faces.F[2]];
-        this.faces.F[0] = this.faces.L[0]; this.faces.F[1] = this.faces.L[1]; this.faces.F[2] = this.faces.L[2];
-        this.faces.L[0] = this.faces.B[0]; this.faces.L[1] = this.faces.B[1]; this.faces.L[2] = this.faces.B[2];
-        this.faces.B[0] = this.faces.R[0]; this.faces.B[1] = this.faces.R[1]; this.faces.B[2] = this.faces.R[2];
-        this.faces.R[0] = temp[0];         this.faces.R[1] = temp[1];         this.faces.R[2] = temp[2];
+        this.faces.F[0] = this.faces.R[0]; this.faces.F[1] = this.faces.R[1]; this.faces.F[2] = this.faces.R[2];
+        this.faces.R[0] = this.faces.B[0]; this.faces.R[1] = this.faces.B[1]; this.faces.R[2] = this.faces.B[2];
+        this.faces.B[0] = this.faces.L[0]; this.faces.B[1] = this.faces.L[1]; this.faces.B[2] = this.faces.L[2];
+        this.faces.L[0] = temp[0];         this.faces.L[1] = temp[1];         this.faces.L[2] = temp[2];
         break;
       }
       case 'D': {
-        // Clockwise from below: Front-bottom → Left-bottom → Back-bottom → Right-bottom
-        // F[6,7,8] → L[6,7,8] → B[6,7,8] → R[6,7,8] → F[6,7,8]
+        // D move cycle (matching cubejs ground truth):
+        // F[6,7,8] ← L[6,7,8] ← B[6,7,8] ← R[6,7,8] ← F[6,7,8]
         const temp = [this.faces.F[6], this.faces.F[7], this.faces.F[8]];
-        this.faces.F[6] = this.faces.R[6]; this.faces.F[7] = this.faces.R[7]; this.faces.F[8] = this.faces.R[8];
-        this.faces.R[6] = this.faces.B[6]; this.faces.R[7] = this.faces.B[7]; this.faces.R[8] = this.faces.B[8];
-        this.faces.B[6] = this.faces.L[6]; this.faces.B[7] = this.faces.L[7]; this.faces.B[8] = this.faces.L[8];
-        this.faces.L[6] = temp[0];         this.faces.L[7] = temp[1];         this.faces.L[8] = temp[2];
+        this.faces.F[6] = this.faces.L[6]; this.faces.F[7] = this.faces.L[7]; this.faces.F[8] = this.faces.L[8];
+        this.faces.L[6] = this.faces.B[6]; this.faces.L[7] = this.faces.B[7]; this.faces.L[8] = this.faces.B[8];
+        this.faces.B[6] = this.faces.R[6]; this.faces.B[7] = this.faces.R[7]; this.faces.B[8] = this.faces.R[8];
+        this.faces.R[6] = temp[0];         this.faces.R[7] = temp[1];         this.faces.R[8] = temp[2];
         break;
       }
       case 'F': {
