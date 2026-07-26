@@ -17,8 +17,11 @@ class CubeScene {
       ...options
     };
 
-    this.width = this.container.clientWidth || 400;
+    this.width  = this.container.clientWidth  || 400;
     this.height = this.container.clientHeight || 400;
+    // Clamp to at least 1px to prevent Infinity/NaN camera aspect on hidden containers
+    if (this.width  <= 0) this.width  = 400;
+    if (this.height <= 0) this.height = 400;
 
     // 1. Create Scene
     this.scene = new THREE.Scene();
@@ -111,9 +114,17 @@ class CubeScene {
    */
   onResize() {
     if (!this.container || !this.renderer) return;
-    
-    this.width = this.container.clientWidth;
-    this.height = this.container.clientHeight;
+
+    const newWidth  = this.container.clientWidth;
+    const newHeight = this.container.clientHeight;
+
+    // BUG D: Skip resize if container has zero dimensions (hidden tab, not-yet-laid-out).
+    // Setting camera.aspect = width/height when height===0 produces Infinity which
+    // permanently corrupts the 3D projection matrix.
+    if (newWidth <= 0 || newHeight <= 0) return;
+
+    this.width  = newWidth;
+    this.height = newHeight;
 
     this.camera.aspect = this.width / this.height;
     this.camera.updateProjectionMatrix();
