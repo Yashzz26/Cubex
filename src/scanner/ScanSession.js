@@ -63,8 +63,9 @@ class ScanSession {
    */
   goBack() {
     if (this.currentFaceIndex > 0) {
-      const currentFace = this.getCurrentFace();
-      this.faceResults[currentFace] = null;
+      // Bug 4: Decrement first, then clear only the face we're returning to re-scan.
+      // Old code cleared both the current (unconfirmed) and previous (confirmed) face,
+      // destroying the user's confirmed scan data.
       this.currentFaceIndex--;
       const prevFace = this.getCurrentFace();
       this.faceResults[prevFace] = null;

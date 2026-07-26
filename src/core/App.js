@@ -65,7 +65,7 @@ class App {
           <div class="logo-icon">
             <i class="bx bxs-cube-alt"></i>
           </div>
-          <span>Cubix</span>
+          <span>Cubex</span>
         </a>
         
         <!-- Desktop Nav -->
@@ -97,7 +97,7 @@ class App {
             <div class="logo-icon">
               <i class="bx bxs-cube-alt"></i>
             </div>
-            <span>Cubix</span>
+            <span>Cubex</span>
           </div>
           <button id="drawer-close" class="btn-icon" aria-label="Close menu">
             <i class="bx bx-x"></i>
@@ -121,7 +121,7 @@ class App {
 
       <!-- App Footer -->
       <footer class="app-footer">
-        <p>&copy; ${new Date().getFullYear()} Cubix. Built with Three.js & cubejs. All rights reserved.</p>
+        <p>&copy; ${new Date().getFullYear()} Cubex. Built with Three.js &amp; cubejs. All rights reserved.</p>
       </footer>
     `;
 

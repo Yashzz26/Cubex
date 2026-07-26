@@ -7,21 +7,21 @@ class AboutPage {
     return `
       <div class="about-page animate-fade-in" style="display: flex; flex-direction: column; gap: var(--spacing-xl); max-width: 800px; margin: 0 auto; width: 100%;">
         <div style="text-align: center;">
-          <h2 class="section-title">About Cubix</h2>
+          <h2 class="section-title">About Cubex</h2>
           <p class="section-subtitle">Understanding the engineering behind Rubik's Cube solving and animations.</p>
         </div>
 
         <section class="card" style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
           <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">Core Philosophy</h3>
           <p>
-            Solving a Rubik's Cube usually requires learning complex notation systems and memorizing long algorithmic transformations. Cubix bridges this gap by offering a fully interactive, browser-based visual solver that demonstrates every face rotation dynamically in 3D.
+            Solving a Rubik's Cube usually requires learning complex notation systems and memorizing long algorithmic transformations. Cubex bridges this gap by offering a fully interactive, browser-based visual solver that demonstrates every face rotation dynamically in 3D.
           </p>
         </section>
 
         <section class="card" style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
           <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">Technical Overview</h3>
           <p>
-            Cubix is designed as a modular, client-side application built on top of robust open-source technologies:
+            Cubex is designed as a modular, client-side application built on top of robust open-source technologies:
           </p>
           <ul style="display: flex; flex-direction: column; gap: var(--spacing-xs); margin-top: var(--spacing-xs); padding-left: var(--spacing-md); list-style-type: disc;">
             <li><strong>3D rendering</strong> is handled by <strong>Three.js</strong>, treating the cube as 27 coordinates with independent texture maps and rotating them around global axes inside a WebGL context.</li>
